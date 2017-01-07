@@ -1,5 +1,13 @@
 using Base.Test
 using TimeDomainReflectometryPeeling
-@testset "TDRPeeling Tests" begin
-   @test relativeReflectionCoefficientsToAbsoluteImpedances(1,50) == Inf
+@testset "TimeDomainReflectometryPeeling Tests" begin
+   @time @testset "relativeReflectionCoefficientsToAbsoluteImpedances" begin
+      include("./relativeReflectionCoefficientsToAbsoluteImpedances.jl")
+   end
+   @time @testset "reflectionCoefficientsToReflectedVoltageSignal" begin
+      include("./reflectionCoefficientsToReflectedVoltageSignal.jl")
+   end
+   @time @testset "reflectedVoltageSignalToReflectionCoefficients" begin
+      include("./reflectedVoltageSignalToReflectionCoefficients.jl")
+   end
 end
