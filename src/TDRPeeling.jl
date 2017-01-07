@@ -1,7 +1,5 @@
 module TDRPeeling
 
-using Combinatorics
-
 include("./reflectionCoefficientsToReflectedVoltageSignal.jl")
 include("./transitionFromPath.jl")
 include("./relativeReflectionCoefficientsToAbsoluteImpedances.jl")
