@@ -1,8 +1,6 @@
-workspace()
-include("reflectionCoefficientsToReflectedVoltageSignal.jl")
-design_impedances = [30  80  50  80  30  50;
-                     50  30  80  50  80  30]
-design_reflection_coefficients = map((x,y)->(x-y)/(x+y),design_impedances[1,:],design_impedances[2,:])
-reflection_coefficient_matrix = hcat(reshape([0:5;1:6;0:5;zeros(6,1)],6,4), design_reflection_coefficients)
-
-reflected_voltage_signal = reflectionCoefficientsToReflectedVoltageSignal(reflection_coefficient_matrix,11)
+using TDRPeeling
+z = [50,30,80,50,80,30,50]
+r = [((z[i+1]-z[i])/(z[i+1]+z[i])) for i=1:length(z)-1]
+v = reflectionCoefficientsToReflectedVoltageSignal(r,12)
+c = reflectedVoltageSignalToReflectionCoefficients(v)
+z_f = relativeReflectionCoefficientsToAbsoluteImpedances(c,50)
