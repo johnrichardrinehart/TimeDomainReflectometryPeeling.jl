@@ -1,4 +1,4 @@
-![travis](https://travis-ci.org/fuzzybear3965/TDRPeeling.jl.svg?branch=master)
+[![Build Status](https://travis-ci.org/fuzzybear3965/TDRPeeling.jl.svg?branch=master)](https://travis-ci.org/fuzzybear3965/TDRPeeling.jl)
 
 TDRPeeling.jl
 =============
