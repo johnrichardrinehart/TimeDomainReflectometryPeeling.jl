@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/fuzzybear3965/TimeDomainReflectometryPeeling.jl.svg?branch=master)](https://travis-ci.org/fuzzybear3965/TimeDomainReflectometryPeeling.jl)
 [![Build status](https://ci.appveyor.com/api/projects/status/rym1ijwldt575s52/branch/master?svg=true)](https://ci.appveyor.com/project/fuzzybear3965/timedomainreflectometrypeeling-jl/branch/master)
+[![codecov](https://codecov.io/gh/fuzzybear3965/TimeDomainReflectometryPeeling.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/fuzzybear3965/TimeDomainReflectometryPeeling.jl)
+[![Coverage Status](https://coveralls.io/repos/github/fuzzybear3965/TimeDomainReflectometryPeeling.jl/badge.svg?branch=master)](https://coveralls.io/github/fuzzybear3965/TimeDomainReflectometryPeeling.jl?branch=master)
 
 TimeDomainReflectometryPeeling.jl
 =================================
