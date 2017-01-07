@@ -1,1 +1,1 @@
-using Combinatorics
+Pkg.add("Combinatorics")

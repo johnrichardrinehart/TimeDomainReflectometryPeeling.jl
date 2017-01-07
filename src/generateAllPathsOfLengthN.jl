@@ -4,7 +4,7 @@ function generateAllPathsOfLengthN(n::Int)
       return [[Int8(1), Int8(-1)]]
    end
    paths = collect(filter(path -> !any(cumsum(path).<0),
-                          multiset_permutations(vcat(ones(Int8,depth),-ones(Int8,depth)),2*depth)))
+                          Combinatorics.multiset_permutations(vcat(ones(Int8,depth),-ones(Int8,depth)),2*depth)))
    unshift!.(paths,Int8(1))
    push!.(paths,Int8(-1))
    return paths
