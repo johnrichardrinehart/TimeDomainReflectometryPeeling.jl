@@ -5,9 +5,8 @@ function reflectedVoltageSignalToReflectionCoefficients(v)
    old_paths = generateAllPathsOfLengthN(2)
    for time_step = 3:length(v)
       new_paths = generateAllPathsOfLengthN(time_step)
-#      transitions = map(x -> transitionFromPath(x), new_paths)
       # take out deepest transition
-      filter!(x -> maximum(cumsum(x)) <= time_step, new_paths)
+      filter!(x -> maximum(cumsum(x)) < time_step, new_paths)
       # weights of all the paths but the deepest one
       weights = map(x -> pathWeightCalculator(x,r[1:time_step-1]), new_paths)
       # partial weight of the deepest path
