@@ -1,9 +1,9 @@
-function reflectedVoltageSignalToReflectionCoefficients(v;bouncing_tolerance=Inf)
+function reflected_voltage_signal_to_reflection_coefficients(v;bouncing_tolerance=Inf)
    r = Vector{Float64}(length(v))
    r[1] = v[1]
    r[2] = (v[2]-v[1])/((1-r[1])*(1+r[1]))
    for time_step = 3:length(v)
-      paths = generateAllPathsOfLengthN(time_step)
+      paths = generate_all_paths_of_length_n(time_step)
       # take out deepest transition
       filter!(x -> maximum(cumsum(x)) < time_step, paths)
       filter!(x -> count_sub_vecs([1,-1],x) < bouncing_tolerance, paths)
@@ -11,7 +11,7 @@ function reflectedVoltageSignalToReflectionCoefficients(v;bouncing_tolerance=Inf
       if length(paths) == 0
          weights = 0
       else
-      weights = map(x -> pathWeightCalculator(x,r[1:time_step-1]), paths)
+      weights = map(x -> path_weight_calculator(x,r[1:time_step-1]), paths)
       end
       # partial weight of the deepest path
       partial_weight_deepest_path = prod(1-r[1:time_step-1])*prod(1+r[1:time_step-1])

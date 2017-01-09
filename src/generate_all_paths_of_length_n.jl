@@ -1,4 +1,4 @@
-function generateAllPathsOfLengthN(n::Int)
+function generate_all_paths_of_length_n(n::Int)
    depth = n - 1
    if depth == 0
       return [[Int8(1), Int8(-1)]]

@@ -1,4 +1,4 @@
-function pathWeightCalculator(path,r;cur_medium=0,is_moving_deeper=true)
+function path_weight_calculator(path,r;cur_medium=0,is_moving_deeper=true)
    path_amplitude = 1
    for (step, motion) in enumerate(view(path,2:length(path)))
       step += 1 # account for the shift because of the above `view`

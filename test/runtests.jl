@@ -1,13 +1,13 @@
 using Base.Test
 using TimeDomainReflectometryPeeling
 @testset "TimeDomainReflectometryPeeling Tests" begin
-   @time @testset "relativeReflectionCoefficientsToAbsoluteImpedances" begin
-      include("./relativeReflectionCoefficientsToAbsoluteImpedances.jl")
+   @time @testset "relative_reflection_coefficients_to_absolute_impedances" begin
+      include("./relative_reflection_coefficients_to_absolute_impedances.jl")
    end
-   @time @testset "reflectionCoefficientsToReflectedVoltageSignal" begin
-      include("./reflectionCoefficientsToReflectedVoltageSignal.jl")
+   @time @testset "reflection_coefficients_to_reflected_voltage_signal" begin
+      include("./reflection_coefficients_to_reflected_voltage_signal.jl")
    end
-   @time @testset "reflectedVoltageSignalToReflectionCoefficients" begin
-      include("./reflectedVoltageSignalToReflectionCoefficients.jl")
+   @time @testset "reflected_voltage_signal_to_reflection_coefficients" begin
+      include("./reflected_voltage_signal_to_reflection_coefficients.jl")
    end
 end
