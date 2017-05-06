@@ -1,24 +1,26 @@
-function reflection_coefficients_to_reflected_voltage_signal(r::Array{Float64,1}, t::Int; bounces=Inf, V::Array{Float64,1}=[1.0])
+function reflection_coefficients_to_reflected_voltage_signal(r::Vector{Float64}; t::Int=length(r), bounces::Float64=Inf, Vin::Vector{Float64}=[1.0],debug::Bool=false)
   if t < length(r)
     warn("time steps less than number of reflection coefficients")
   end
   t = t>length(r)?t:length(r) # number of time steps redefined in case t < length(r)
   # initialize output
   v = Vector{Float64}(t)
-  # Interpret a constant TDR voltage as an array of voltages of identical
-  # values
-  if (length(V) == 1)
-    V = V[1]*ones(t)
-  end
+
 
   # Incident on the right side (towards the source)
   R = t<length(r) ? MesaArray(t,t) : MesaArray(t,length(r))
   # Incident of the left side (away from the source)
   L = t<length(r) ? MesaArray(t,t) : MesaArray(t,length(r))
-  # The TDR is incident on the entire i=1 line.
-  L[1,:] = V
+  # Interpret a constant TDR voltage as an array of voltages of identical
+  # values
+  if (length(Vin) == 1)
+    L[1,:] = Vin[1]
+  elseif (length(Vin) == t)
+    # The TDR is incident on the entire i=1 line.
+    L[1,:] = Vin[1:t]
+  end
   # Set up the initial condition
-  v[1] = r[1]*V[1]
+  v[1] = r[1]*Vin[1]
   # step through time
   for i = 2:t
     # For every time step I need to calculate
@@ -55,5 +57,9 @@ function reflection_coefficients_to_reflected_voltage_signal(r::Array{Float64,1}
     end
     v[i] = L[1,i]*r[1] + R[1,i]*(1+r[1])
   end
-  return v
+  if debug
+    return Dict("L" => L, "R" => R, "r" => r, "v" => v)
+  else
+    return v
+  end
 end
