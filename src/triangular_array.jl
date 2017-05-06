@@ -3,7 +3,7 @@ tri(n) = n*(n+1) >> 1
 type TriangularArray{T<:Number} <: AbstractArray{T,2}
    data::Vector{T}
    depth::Int
-   TriangularArray(n) = new(Vector{T}(tri(n)),n)
+   TriangularArray(n) = new(zeros(T,tri(n)),n)
 end
 TriangularArray(n) = TriangularArray{Float64}(n)
 
@@ -13,7 +13,8 @@ Base.setindex!(T::TriangularArray,x::Number,i::Int) = (T.data[i]=x)
 
 function Base.setindex!(T::TriangularArray,x::Number,i::Int,j::Int)
    if i+j-1>T.depth
-      return NaN
+     println("Trying to access array at: ", (i,j))
+      throw(BoundsError)
    else
       v = 0
       for k = 0:i-2
@@ -27,16 +28,16 @@ end
 Base.getindex{T}(A::TriangularArray{T}, i::Int) = get(A.data,i,NaN)
 
 function Base.getindex{T}(A::TriangularArray{T}, i::Int, j::Int)::T
-   if i+j-1>A.depth
-      NaN
-   else
+   if i+j-1 <= A.depth
       v = 0
       for k = 0:i-2
          v += A.depth - k
       end
       v+=j
       A.data[v]
-    end
+   else
+      return NaN
+   end
 end
 
 function Base.replace_in_print_matrix(T::TriangularArray,i::Integer,j::Integer,s::AbstractString)
