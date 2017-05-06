@@ -1,6 +1,6 @@
 module TimeDomainReflectometryPeeling
 
-import Combinatorics
+#import Combinatorics
 
 include("./reflection_coefficients_to_reflected_voltage_signal.jl")
 include("./relative_reflection_coefficients_to_absolute_impedances.jl")
