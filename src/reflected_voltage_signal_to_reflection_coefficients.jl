@@ -50,10 +50,12 @@ function reflected_voltage_signal_to_reflection_coefficients(v;Vin=1,debug::Bool
       #extend the tip along the i=1 line
       if i < length(v)
          L[i+1,1] = (1-r[i])*L[i,1]
-         # calculate new right paths
-         for j = i-2:-1:1
-            R[j,i-j+1] = R[j+1,i-j]*(1+r[j+1]) + L[j+1,i-j]*r[j+1]
-         end
+      end
+      # calculate new right paths
+      for j = i-2:-1:1
+         R[j,i-j+1] = R[j+1,i-j]*(1+r[j+1]) + L[j+1,i-j]*r[j+1]
+      end
+      if i < length(v)
          #calculate new left paths
          for j = 2:i
             L[i-j+2,j] = L[i-j+1,j] *(1-r[i-j+1]) + R[i-j+1,j]*(-r[i-j+1])
