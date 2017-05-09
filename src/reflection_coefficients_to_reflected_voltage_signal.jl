@@ -5,8 +5,6 @@ function reflection_coefficients_to_reflected_voltage_signal(r::Vector{Float64};
   t = t>length(r)?t:length(r) # number of time steps redefined in case t < length(r)
   # initialize output
   v = Vector{Float64}(t)
-
-
   # Incident on the right side (towards the source)
   R = t<length(r) ? MesaArray(t,t) : MesaArray(t,length(r))
   # Incident of the left side (away from the source)
