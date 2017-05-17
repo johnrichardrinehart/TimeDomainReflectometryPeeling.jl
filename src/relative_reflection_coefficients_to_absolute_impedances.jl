@@ -1,8 +1,8 @@
-function relative_reflection_coefficients_to_absolute_impedances(ref_coeffs, ref_impedance)
-   impedances = zeros(length(ref_coeffs))
-   impedances[1] = ref_impedance * (1+ref_coeffs[1])/(1-ref_coeffs[1])
-   for i = 2:length(ref_coeffs)
-      impedances[i] = impedances[i-1] * (1+ref_coeffs[i])/(1-ref_coeffs[i])
+function relative_reflection_coefficients_to_absolute_impedances(rs; Z0=50)
+   Zs = zeros(length(rs))
+   Zs[1] = Z0 * (1+rs[1])/(1-rs[1])
+   for i = 2:length(rs)
+      Zs[i] = Zs[i-1] * (1+rs[i])/(1-rs[i])
    end
-   return impedances
+   return Zs
 end
