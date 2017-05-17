@@ -1,7 +1,5 @@
-using Clustering
-using TimeDomainReflectometryPeeling
 """
-k_means_tdr(v, n; change, times)
+k_means_tdr(v, n; change, times, maxiter, display)
 
 Bins time-domain voltage vector with n bins.
 
@@ -14,92 +12,64 @@ that must exist in order to meet that requirement (::Int).
 strip_times: Vector{Vector{Float64,2}} - a vector of vectors. Each inner vector
 contains the indices of the start/stop points to remove from the binning procedure.
 """
-function k_means_tdr(v,n; change=(.0,0), strip_times=[])
-   if (change[2] > 0)
-      # track the number of rises/falls
-      count = 0
-      # track the most recent direction (0 is down and 1 is up)
-      d = -1
-      # iterate through v counting how many times the voltage grows "too much"
-      for i = 1:length(v)-1
-         # count up how many consecutive instances of "change" there is
-         # check if it went up (and has been up before)
-         if (v[i+1] - v[i]) > change[1]
-            if d == 1
-               count += 1
-            else
-               if count >= change[2]
-                  # check if there have been enough consecutive changes
-                  # store the times that are to be stripped
-                  append!(strip_times,[[i-count-1,i-1]])
-               end
-               count = 0
-            end
-            d = 1
-            # check if it went down (and has been down before)
-         elseif (v[i+1] - v[i]) < -change[1]
-            if d == 0
-               count += 1
-            else
-               if count >= change[2]
-                  # check if there have been enough consecutive changes
-                  # store the times that are to be stripped
-                  append!(strip_times,[[i-count-1,i-1]])
-               end
-               count = 0
-            end
-            d = 0
+function k_means_tdr(
+                     v,
+                     n;
+                     change=(.0,0),
+                     strip_times=[],
+                     strip_times_assignments=[],
+                     maxiter=200,
+                     display=:none
+                    )
+   # loop through the n+1 segments finding where the edges are.
+   edges = []
+   # for n strip_items there are n+1 segments to loop through
+   for i = eachindex(strip_times)
+      if i == 1
+         slice = 1:strip_times[1][1]-1
+      else
+         slice = strip_times[i-1][end]+1:strip_times[i][1]
+      end
+      if length(slice) > 0
+         append!(edges, edge_detect(v[slice],change,start_idx=slice[1]))
+      end
+      if i == length(strip_times) # handle the case when i == length(strip_times)
+         slice = strip_times[i][end]+1:length(v)
+         if length(slice) > 0
+            append!(edges, edge_detect(v[slice],change,start_idx=slice[1]))
          end
       end
    end
-   println(size(v))
-   # if there were any growing sequences then remove them
-   if length(strip_times) > 0
-      stripped_v = copy(v) # copy v to stripped_v
-      strip_pairs!(stripped_v, strip_times)
-      # stripped_v is the stripped voltage vector
-   end
-   if length(size(stripped_v)) == 1
-      stripped_v = reshape(stripped_v,1,length(stripped_v))
-   end
-   # bin the data
-   ks = kmeans(stripped_v,n)
-   # turn back into a vector
-   data = reshape(stripped_v,length(stripped_v))
-   # map the data to the determined bins
-   means = map(x -> ks.centers[x], ks.assignments)
-   # bin the stripped data - note that the indices of ks.assignments do not
-   # match the strip_times indices, because the strip_times indices reference
-   # elements from v whose length is greater, now, than ks.assignments. We can
-   # accommodate for this, however, by tracking how many values we've spliced
-   # back into binned.
-   insert_count = 0
-   for i = 1:length(strip_times)
-      # determine the bin values of the previous and subsequent levels
-      init_idx = strip_times[i][1]
-      end_idx = strip_times[i][2]
 
-      println("start idx: ", init_idx, "\t", insert_count)
-      println("end idx: ", end_idx, "\t", insert_count)
-      p = ks.centers[ks.assignments[(init_idx-insert_count)-1]]
-      println("p: ", p)
-      s = ks.centers[ks.assignments[init_idx-insert_count+1]]
-      println("s: ", s)
+   # indices_to_bin is everything that's not in edges and in strip_times
+   indices_to_bin = setdiff(1:length(v),unique(vcat(strip_times..., edges...)))
 
-      binned = map(x -> abs(x-p)<abs(x-s)?p:s, v[init_idx:end_idx])
-      splice!(means,init_idx:init_idx-1,binned)
-      insert_count += length(binned)
-   end
-   return means
-   #return Dict("centers" => ks.centers,
-   #"binned" => means,)
-end
+   ks = kmeans(
+               reshape(v[indices_to_bin], 1, length(indices_to_bin)),
+               n,
+               maxiter=maxiter,
+               display=display,
+              )
 
-function strip_pairs!(a, p)
-   #removed_index_sum = 0
-   for i = length(p):-1:1
-      println("Stripping indices ", p[i][1], ":", p[i][2],".")
-      splice!(a, p[i][1]:p[i][2])
+   # allocate value for the result
+   res = zeros(Int,length(v))
+   res[indices_to_bin] = ks.assignments
+
+   # bin the values that were manually stripped out (per the strip_times
+   # argument
+   closest_val_to_options(val; options=ks.centers) = findmin(abs(options-val))[2]
+   for i in strip_times
+      res[i] = closest_val_to_options(mean(v[i]))*ones(Int,length(i))
    end
-   return a
+   for edge in edges
+      prior_idx = res[edge[1]-1] # stores the ks.centers index
+      posterior_idx = res[edge[end]+1] # stores the ks.centers index
+      binned_edges_idxs = closest_val_to_options.(
+                                             v[edge];
+                                             options=[ks.centers[prior_idx],ks.centers[posterior_idx]]
+                                            )
+      res[edge] = map(x -> [prior_idx,posterior_idx][x], binned_edges_idxs)
+   end
+
+   return (res, ks.centers, edges)
 end
