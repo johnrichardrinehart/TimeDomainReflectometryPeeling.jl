@@ -9,7 +9,7 @@ function reflected_voltage_signal_to_reflection_coefficients(v;Vin=1,debug::Bool
    if length(Vin) == 1
       L[1,:] = Vin[1]
    else
-      L[1,:] = Vin
+      L[1,:] = vcat(Vin, zeros(length(v)-length(Vin)))
    end
 
    # reflection coefficient
