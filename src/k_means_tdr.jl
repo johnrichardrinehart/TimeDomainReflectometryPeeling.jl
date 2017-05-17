@@ -16,27 +16,41 @@ function k_means_tdr(
                      v,
                      n;
                      change=(.0,0),
-                     strip_times=[],
+                     strip_times=[1:0],
                      strip_times_assignments=[],
                      maxiter=200,
-                     display=:none
+                     display=:none,
+                     remove_edges=false
                     )
-   # loop through the n+1 segments finding where the edges are.
+
    edges = []
-   # for n strip_items there are n+1 segments to loop through
-   for i = eachindex(strip_times)
-      if i == 1
-         slice = 1:strip_times[1][1]-1
-      else
-         slice = strip_times[i-1][end]+1:strip_times[i][1]
-      end
-      if length(slice) > 0
-         append!(edges, edge_detect(v[slice],change,start_idx=slice[1]))
-      end
-      if i == length(strip_times) # handle the case when i == length(strip_times)
-         slice = strip_times[i][end]+1:length(v)
-         if length(slice) > 0
+   # find the edges and store them
+   # loop through the n+1 segments finding where the edges are.
+   if remove_edges
+      # for n strip_items there are n+1 segments to loop through
+      for i = eachindex(strip_times)
+         # if we're on the first slice and it's longer than 0
+         if i == 1 && length(strip_times[i]) > 0
+            slice = 1:strip_times[1][1]-1
+            if length(slice) > 0
+               append!(edges, edge_detect(v[slice],change,start_idx=slice[1]))
+            end
+         elseif i == 1 && length(strip_times[i]) == 0 # none was passed
+            slice = 1:length(v)
             append!(edges, edge_detect(v[slice],change,start_idx=slice[1]))
+         elseif i > 1 # middle cases
+            slice = strip_times[i-1][end]+1:strip_times[i][1]
+            if length(slice) > 0
+               append!(edges, edge_detect(v[slice],change,start_idx=slice[1]))
+            end
+         end
+
+         # handle the end case if it has non-zero length
+         if i == length(strip_times) && length(strip_times[i]) > 0
+            slice = strip_times[i][end]+1:length(v)
+            if length(slice) > 0
+               append!(edges, edge_detect(v[slice],change,start_idx=slice[1]))
+            end
          end
       end
    end
@@ -65,9 +79,9 @@ function k_means_tdr(
       prior_idx = res[edge[1]-1] # stores the ks.centers index
       posterior_idx = res[edge[end]+1] # stores the ks.centers index
       binned_edges_idxs = closest_val_to_options.(
-                                             v[edge];
-                                             options=[ks.centers[prior_idx],ks.centers[posterior_idx]]
-                                            )
+                                                  v[edge];
+                                                  options=[ks.centers[prior_idx],ks.centers[posterior_idx]]
+                                                 )
       res[edge] = map(x -> [prior_idx,posterior_idx][x], binned_edges_idxs)
    end
 
