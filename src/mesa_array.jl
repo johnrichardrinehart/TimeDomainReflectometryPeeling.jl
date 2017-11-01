@@ -2,7 +2,7 @@ type MesaArray{T} <: AbstractArray{T,2}
    data::Vector{T}
    width::Int
    height::Int
-   MesaArray(w,h) = begin
+   MesaArray{T}(w,h) where T = begin
      if h > w
        throw("height can not be greater than the width")
      end
@@ -32,7 +32,7 @@ function Base.replace_in_print_matrix(M::MesaArray,i::Integer,j::Integer,s::Abst
 end
 
 Base.size(M::MesaArray) = (M.height,M.width)
-Base.linearindexing(::MesaArray) = Base.LinearSlow()
+Base.IndexStyle(::MesaArray) = Base.LinearSlow()
 Base.setindex!(M::MesaArray,x::Number,i::Int) = (M.data[i]=x)
 
 function Base.setindex!(M::MesaArray,x::Number,i::Int,j::Int)

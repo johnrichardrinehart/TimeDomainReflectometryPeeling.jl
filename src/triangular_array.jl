@@ -3,12 +3,12 @@ tri(n) = n*(n+1) >> 1
 type TriangularArray{T<:Number} <: AbstractArray{T,2}
    data::Vector{T}
    depth::Int
-   TriangularArray(n) = new(zeros(T,tri(n)),n)
+   TriangularArray{T}(n) where T = new(zeros(T,tri(n)),n)
 end
 TriangularArray(n) = TriangularArray{Float64}(n)
 
 Base.size(T::TriangularArray) = (T.depth,T.depth)
-Base.linearindexing(::TriangularArray) = Base.LinearSlow()
+Base.IndexStyle(::TriangularArray) = Base.LinearSlow()
 Base.setindex!(T::TriangularArray,x::Number,i::Int) = (T.data[i]=x)
 
 function Base.setindex!(T::TriangularArray,x::Number,i::Int,j::Int)

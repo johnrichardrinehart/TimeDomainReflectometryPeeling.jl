@@ -9,81 +9,112 @@ change::Tuple(::Float64,::Int) - a tuple determining the
 threshold slope for voltage change (::Float64) and the minimum number of points
 that must exist in order to meet that requirement (::Int).
 
-strip_times: Vector{Vector{Float64,2}} - a vector of vectors. Each inner vector
+edges: Vector{Vector{Float64,2}} - a vector of vectors. Each inner vector
 contains the indices of the start/stop points to remove from the binning procedure.
 """
 function k_means_tdr(
                      v,
-                     n;
+                     k;
                      change=(.0,0),
-                     strip_times=[1:0],
-                     strip_times_assignments=[],
+                     edges=[],
                      maxiter=200,
                      display=:none,
-                     remove_edges=false
+                     remove_edges=false,
                     )
-
-   edges = []
-   # find the edges and store them
-   # loop through the n+1 segments finding where the edges are.
-   if remove_edges
-      # for n strip_items there are n+1 segments to loop through
-      for i = eachindex(strip_times)
-         # if we're on the first slice and it's longer than 0
-         if i == 1 && length(strip_times[i]) > 0
-            slice = 1:strip_times[1][1]-1
-            if length(slice) > 0
-               append!(edges, edge_detect(v[slice],change,start_idx=slice[1]))
+    segments=[]
+    temp=[]
+    # find the edges and store them
+    # loop through the n+1 segments finding where the edges are.
+    if remove_edges
+        # for n strip_items there are n+1 segments to loop through
+        for i = 1:length(edges)
+            # if we're on the first slice and it's longer than 0
+            if i == 1
+                append!(segments, [1:edges[1][1]-1])
+            elseif i > 1 # middle cases
+                append!(segments, [edges[i-1][end]+1:edges[i][1]-1])
             end
-         elseif i == 1 && length(strip_times[i]) == 0 # none was passed
-            slice = 1:length(v)
-            append!(edges, edge_detect(v[slice],change,start_idx=slice[1]))
-         elseif i > 1 # middle cases
-            slice = strip_times[i-1][end]+1:strip_times[i][1]
-            if length(slice) > 0
-               append!(edges, edge_detect(v[slice],change,start_idx=slice[1]))
+            if i == length(edges)
+                append!(segments, [edges[i][end]+1:length(v)])
             end
-         end
+        end
+    end
+    println("Segment Locations: ", segments)
+    println("Edges Locations: ", edges)
 
-         # handle the end case if it has non-zero length
-         if i == length(strip_times) && length(strip_times[i]) > 0
-            slice = strip_times[i][end]+1:length(v)
-            if length(slice) > 0
-               append!(edges, edge_detect(v[slice],change,start_idx=slice[1]))
-            end
-         end
-      end
-   end
+    # indices_to_bin is everything that's not in edges
+    indices_to_bin = setdiff(1:length(v),vcat(edges...))
 
-   # indices_to_bin is everything that's not in edges and in strip_times
-   indices_to_bin = setdiff(1:length(v),unique(vcat(strip_times..., edges...)))
+    ks = kmeans(
+                reshape(v[indices_to_bin], 1, length(indices_to_bin)),
+                k,
+                maxiter=maxiter,
+                display=display,
+               )
 
-   ks = kmeans(
-               reshape(v[indices_to_bin], 1, length(indices_to_bin)),
-               n,
-               maxiter=maxiter,
-               display=display,
-              )
+    # allocate value for the result
+    #res = zeros(length(v))
+    res = map(x ->ks.centers[x], ks.assignments)
+    cum = 1
+    count = 0
+    for segment in segments
+        println("\nres is length: ", length(res))
+        count += 1 # segment we're on
+        #println("Values to segmentize: ",
+                #segmentize(res[cum:cum+length(segment)-1], ks.centers))
+        #println("Length of values to segmentize:
+                #",length(cum:cum+length(segment)-1))
+        #println("Segmentized values: ",
+                #segmentize(res[cum:cum+length(segment)-1], ks.centers))
+        working_domain = cum:cum+length(segment)-1
+        println("Indices to segmentize: ", working_domain)
+        println("Correcting ", length(working_domain), " values.")
+        # correct the segment we're working on
+        res[working_domain] = segmentize(res[working_domain], ks.centers)
+        # group the values of the edge
+        #if count == length(segments)
+            #working_domain = cum:cum+length(segment)-edges[count]
+            #println("\n All done. One more segment to correct.")
+            #println("working_domain is: ", working_domain)
+            #println("adding on: ", length(working_domain), " values.")
+            #res[working_domain] = segmentize(res[working_domain], ks.centers)
+        #end
+        # Clean up the edges; this has to come after the second segment has bene
+        # binned
+        if count > 1
+            working_domain = edges[count-1][1]:edges[count-1][end]
+            println("\nCleaning up edge.")
+            println("working_domain is: ", working_domain)
+            println("Adding on ", length(working_domain), " values.")
+            splice!(
+                   res,
+                   working_domain[1]:working_domain[1]-1,
+                   deedge(v[working_domain],res[cum-1],res[cum+1])
+                  )
+        end
+        # increment the pointer to the next segment
+        if count > 1
+            cum += length(segment) + length(edges[count-1])
+            println("\ncum is now: ", cum)
+        elseif count == 1
+            cum += length(segment)
+            println("\ncum is now: ", cum)
+        end
+    end
 
-   # allocate value for the result
-   res = zeros(Int,length(v))
-   res[indices_to_bin] = ks.assignments
+    if length(res) != length(v)
+        error("Number of clustered voltage samples does not match number of provided
+              samples. Check your `edges` array. length(res):", length(res),";
+              length(v): ",length(v),".")
+    end
+    return Dict("clustered_data" => res, "means" => ks.centers)
+end
 
-   # bin the values that were manually stripped out (per the strip_times
-   # argument
-   closest_val_to_options(val; options=ks.centers) = findmin(abs(options-val))[2]
-   for i in strip_times
-      res[i] = closest_val_to_options(mean(v[i]))*ones(Int,length(i))
-   end
-   for edge in edges
-      prior_idx = res[edge[1]-1] # stores the ks.centers index
-      posterior_idx = res[edge[end]+1] # stores the ks.centers index
-      binned_edges_idxs = closest_val_to_options.(
-                                                  v[edge];
-                                                  options=[ks.centers[prior_idx],ks.centers[posterior_idx]]
-                                                 )
-      res[edge] = map(x -> [prior_idx,posterior_idx][x], binned_edges_idxs)
-   end
+function segmentize(s,cs)
+    return map(x->cs[findmin(abs.(cs.-mean(s)))[2]],s)
+end
 
-   return (res, ks.centers, edges)
+function deedge(edge,v1,v2)
+    vs = [v1,v2]
+    return map(x -> vs[findmin(abs.(x-vs))[2]],edge)
 end
