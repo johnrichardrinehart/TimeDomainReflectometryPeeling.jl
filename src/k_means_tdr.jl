@@ -20,6 +20,7 @@ function k_means_tdr(
                      maxiter=200,
                      display=:none,
                      remove_edges=false,
+                     debug=false,
                     )
     segments=[]
     temp=[]
@@ -39,8 +40,10 @@ function k_means_tdr(
             end
         end
     end
-    println("Segment Locations: ", segments)
-    println("Edges Locations: ", edges)
+    if debug
+        println("Segment Locations: ", segments)
+        println("Edges Locations: ", edges)
+    end
 
     # indices_to_bin is everything that's not in edges
     indices_to_bin = setdiff(1:length(v),vcat(edges...))
@@ -52,40 +55,33 @@ function k_means_tdr(
                 display=display,
                )
 
-    # allocate value for the result
-    #res = zeros(length(v))
+    # allocate res, the result, which will be modified
     res = map(x ->ks.centers[x], ks.assignments)
     cum = 1
     count = 0
     for segment in segments
-        println("\nres is length: ", length(res))
+        if debug
+            println("\nres is length: ", length(res))
+        end
         count += 1 # segment we're on
-        #println("Values to segmentize: ",
-                #segmentize(res[cum:cum+length(segment)-1], ks.centers))
-        #println("Length of values to segmentize:
-                #",length(cum:cum+length(segment)-1))
-        #println("Segmentized values: ",
-                #segmentize(res[cum:cum+length(segment)-1], ks.centers))
         working_domain = cum:cum+length(segment)-1
-        println("Indices to segmentize: ", working_domain)
-        println("Correcting ", length(working_domain), " values.")
+        if debug
+            println("\nIndices to segmentize: ", working_domain)
+            println("Correcting ", length(working_domain), " many values.")
+            println("Segmentized values: ",
+                    segmentize(res[working_domain], ks.centers))
+        end
         # correct the segment we're working on
         res[working_domain] = segmentize(res[working_domain], ks.centers)
         # group the values of the edge
-        #if count == length(segments)
-            #working_domain = cum:cum+length(segment)-edges[count]
-            #println("\n All done. One more segment to correct.")
-            #println("working_domain is: ", working_domain)
-            #println("adding on: ", length(working_domain), " values.")
-            #res[working_domain] = segmentize(res[working_domain], ks.centers)
-        #end
-        # Clean up the edges; this has to come after the second segment has bene
-        # binned
+        # Clean up edges; this must occur after segment 2 has been clustered
         if count > 1
             working_domain = edges[count-1][1]:edges[count-1][end]
-            println("\nCleaning up edge.")
-            println("working_domain is: ", working_domain)
-            println("Adding on ", length(working_domain), " values.")
+            if debug
+                println("\nCleaning up edge.")
+                println("working_domain is: ", working_domain)
+                println("Adding on ", length(working_domain), " values.")
+            end
             splice!(
                    res,
                    working_domain[1]:working_domain[1]-1,
@@ -95,10 +91,14 @@ function k_means_tdr(
         # increment the pointer to the next segment
         if count > 1
             cum += length(segment) + length(edges[count-1])
-            println("\ncum is now: ", cum)
+            if debug
+                println("\ncum is now: ", cum)
+            end
         elseif count == 1
             cum += length(segment)
-            println("\ncum is now: ", cum)
+            if debug
+                println("\ncum is now: ", cum)
+            end
         end
     end
 

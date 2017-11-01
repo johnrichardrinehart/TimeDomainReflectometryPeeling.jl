@@ -8,7 +8,7 @@ end
 TriangularArray(n) = TriangularArray{Float64}(n)
 
 Base.size(T::TriangularArray) = (T.depth,T.depth)
-Base.IndexStyle(::TriangularArray) = Base.LinearSlow()
+Base.IndexStyle(::TriangularArray) = Base.IndexCartesian()
 Base.setindex!(T::TriangularArray,x::Number,i::Int) = (T.data[i]=x)
 
 function Base.setindex!(T::TriangularArray,x::Number,i::Int,j::Int)

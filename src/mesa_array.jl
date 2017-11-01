@@ -32,7 +32,7 @@ function Base.replace_in_print_matrix(M::MesaArray,i::Integer,j::Integer,s::Abst
 end
 
 Base.size(M::MesaArray) = (M.height,M.width)
-Base.IndexStyle(::MesaArray) = Base.LinearSlow()
+Base.IndexStyle(::MesaArray) = Base.IndexCartesian()
 Base.setindex!(M::MesaArray,x::Number,i::Int) = (M.data[i]=x)
 
 function Base.setindex!(M::MesaArray,x::Number,i::Int,j::Int)
